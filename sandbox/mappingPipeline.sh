@@ -37,11 +37,16 @@ rm $4.R1.sam
 rm $4.PE.sam
 
 ### Separating forward and reverse strand for read1
-#samtools view -b -F 0x10 $4.R1.bam > $4.R1.forward.bam
-#samtools view -b -f 0x10 $4.R1.bam > $4.R1.reverse.bam
-samtools view -@ 6 $4.R1.forward.bam > $4.R1.forward.sam
-samtools view -@ 6 $4.R1.reverse.bam > $4.R1.reverse.sam
+samtools view -@ 6 -b -F 0x10 $4.R1.bam > $4.R1.forward.bam
+samtools view -@ 6 -b -f 0x10 $4.R1.bam > $4.R1.reverse.bam
+samtools view -@ 6 -h $4.R1.forward.bam > $4.R1.forward.sam
+samtools view -@ 6 -h $4.R1.reverse.bam > $4.R1.reverse.sam
+
+### Sorting PE file
+samtools sort -@ 6 -o $4.PE.srt.bam $4.PE.bam
 
 ### Removing duplicates from PE
-java -XX:ParallelGCThreads=6 -jar /data/personal_folders/jscepanovic/picard.jar MarkDuplicates I=$4.PE.bam O=$4.rmdup.bam M=$4.marked.dup.metrics.txt REMOVE_DUPLICATES=true
-samtools view -@ 6 $4.rmdup.bam > $4.rmdup.sam
+java -XX:ParallelGCThreads=6 -jar /data/personal_folders/jscepanovic/picard.jar MarkDuplicates I=$4.PE.srt.bam O=$4.PE.rmdup.bam M=$4.marked.dup.metrics.txt REMOVE_DUPLICATES=true
+samtools view -@ 6 -h $4.PE.rmdup.bam > $4.PE.rmdup.sam
+
+

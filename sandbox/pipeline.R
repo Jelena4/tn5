@@ -8,10 +8,10 @@ library(Rsamtools)
 
 ################## Parameters to be changed #####################
 
-organism = 'Nv'
-sample = '20dpf'
+organism = 'Sk'
+sample = 'Gill'
 tn5Dir = '/data/personal_folders/jscepanovic/tn5'
-genomeIndex = '/data/genomes/v_TRAPARSED_iter5'
+genomeIndex = '/data/genomes/sacco_final_justChroms'
 
 #################################################################
 
