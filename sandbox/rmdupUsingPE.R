@@ -33,6 +33,21 @@ fileName = prefix %>%
   paste0('.filtR.sam')
 write.table(r1.filt, fileName, sep='\t', quote=F, row.names = F, col.names = F)
 
+# Making a bw file for uploading onto the browser
+bam = paste0(prefix) %>% paste0('.R1.') %>% paste0(strand) %>% paste0('.filtR.bam')
+cmd = 'samtools view -@ 6 -b -o ' %>% paste0(bam) %>% paste(fileName, sep = ' ')
+system(cmd, wait = T)
+
+srt = paste0(prefix) %>% paste0('.R1.') %>% paste0(strand) %>% paste0('.filtR.srt.bam')
+cmd = 'samtools sort -@ 6 -o ' %>% paste0(srt) %>% paste(bam, sep = ' ')
+system(cmd, wait = T)
+
+cmd = 'samtools index -@ 6 -b ' %>% paste0(srt) %>% paste(srt, sep = ' ') %>%  paste0('.bai')
+system(cmd, wait = T)
+
+cmd = '/home/jscepanovic/.local/bin/bamCoverage -bs 1 -b ' %>% paste0(srt) %>% paste0(' -o ') %>% paste0(prefix) %>% paste0('.R1.') %>% paste0(strand) %>% paste0('.filtR.bw')
+system(cmd, wait = F)
+
 ######### Reverse strand ######### 
 
 strand = 'reverse'
@@ -55,5 +70,20 @@ fileName = prefix %>%
   paste0(strand) %>% 
   paste0('.filtR.sam')
 write.table(r1.filt, fileName, sep='\t', quote=F, row.names = F, col.names = F)
+
+# Making a bw file for uploading onto the browser
+bam = paste0(prefix) %>% paste0('.R1.') %>% paste0(strand) %>% paste0('.filtR.bam')
+cmd = 'samtools view -@ 6 -b -o ' %>% paste0(bam) %>% paste(fileName, sep = ' ')
+system(cmd, wait = T)
+
+srt = paste0(prefix) %>% paste0('.R1.') %>% paste0(strand) %>% paste0('.filtR.srt.bam')
+cmd = 'samtools sort -@ 6 -o ' %>% paste0(srt) %>% paste(bam, sep = ' ')
+system(cmd, wait = T)
+
+cmd = 'samtools index -@ 6 -b ' %>% paste0(srt) %>% paste(srt, sep = ' ') %>%  paste0('.bai')
+system(cmd, wait = T)
+
+cmd = '/home/jscepanovic/.local/bin/bamCoverage -bs 1 -b ' %>% paste0(srt) %>% paste0(' -o ') %>% paste0(prefix) %>% paste0('.R1.') %>% paste0(strand) %>% paste0('.filtR.bw')
+system(cmd, wait = F)
 
 
