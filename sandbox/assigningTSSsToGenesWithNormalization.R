@@ -283,6 +283,8 @@ strand = 'forward'
 prefix.strand = prefix %>% paste(strand, sep = '.')
 peaks = fread(prefix.strand %>% paste0('.peaks.threshold.adjusted.bed'))
 names(peaks) = c('chr', 'start.macs', 'end.macs', 'max.coverage', 'strand', 'start.bbmap', 'end.bbmap', 'n.reads', 'area', 'keep', 'size.macs')
+peaks = peaks %>% mutate(area = str_sub(start.bbmap, 1, -3)) %>% mutate(subarea = str_sub(start.bbmap, -2, -2))
+peaks = peaks %>% mutate(subarea2 = subarea %>% as.integer()%/% 2)
 peaks.ranges = GRanges(seqnames = peaks$chr, strand = peaks$strand, ranges = IRanges(start = peaks$start.bbmap, end = peaks$end.bbmap))
 
 # Finding UTR TSSs - directly in previously mapped UTRs
@@ -290,9 +292,10 @@ olaps = findOverlaps(peaks.ranges, utrs.5prime.ranges, ignore.strand = F)
 peaks.olap = peaks[as.data.frame(olaps)$queryHits,]
 peaks.olap = peaks.olap %>% mutate(name = utrs.5prime[as.data.frame(olaps)$subjectHits, 'name'])
 
+
 # Getting maximum coverage peak for each UTR group (since there is often multiple adjacent peaks per a single UTR)
 top.peaks = peaks.olap %>%
-  group_by(chr, name) %>%
+  group_by(chr, name, subarea2) %>%
   dplyr::slice(which.max(n.reads)) %>% 
   ungroup
 
@@ -316,7 +319,7 @@ peaks.olap = peaks.olap %>% mutate(name = mRNAs[as.data.frame(olaps)$subjectHits
 
 # Getting maximum coverage peak for each UTR group (since there is often multiple adjacent peaks per a single UTR)
 top.peaks = peaks.olap %>%
-  group_by(chr, name, area) %>%
+  group_by(chr, name, subarea2) %>%
   dplyr::slice(which.max(n.reads)) %>% 
   ungroup
 
@@ -338,7 +341,7 @@ findTSSsWithinRange = function(range, peaks.ranges, utrs.5prime.ranges, peaks, a
   peaks.olap <<- peaks[!(olaps %>% is.na),] %>% mutate(name = (utrs.5prime[olaps,] %>% na.omit)$name)
   
   # Getting maximum coverage peak for each closely spaced peak group
-  top.peaks <<- peaks.olap %>% group_by(chr, area, name) %>% dplyr::slice(which.max(n.reads)) %>% ungroup
+  top.peaks <<- peaks.olap %>% group_by(chr, subarea2, name) %>% dplyr::slice(which.max(n.reads)) %>% ungroup
   
   assigned.peaks <<- assigned.peaks %>% full_join(top.peaks %>% mutate(type = 'within ' %>% paste0(range) %>% paste0('bp of NVE UTRs')))
   
@@ -369,6 +372,8 @@ strand = 'reverse'
 prefix.strand = prefix %>% paste(strand, sep = '.')
 peaks = fread(prefix.strand %>% paste0('.peaks.threshold.adjusted.bed'))
 names(peaks) = c('chr', 'start.macs', 'end.macs', 'max.coverage', 'strand', 'start.bbmap', 'end.bbmap', 'n.reads', 'area', 'keep', 'size.macs')
+peaks = peaks %>% mutate(area = str_sub(start.bbmap, 1, -3)) %>% mutate(subarea = str_sub(start.bbmap, -2, -2))
+peaks = peaks %>% mutate(subarea2 = subarea %>% as.integer()%/% 2)
 peaks.ranges = GRanges(seqnames = peaks$chr, strand = peaks$strand, ranges = IRanges(start = peaks$start.bbmap, end = peaks$end.bbmap))
 
 # Finding UTR TSSs - directly in previously mapped UTRs
@@ -378,7 +383,7 @@ peaks.olap = peaks.olap %>% mutate(name = utrs.5prime[as.data.frame(olaps)$subje
 
 # Getting maximum coverage peak for each UTR group (since there is often multiple adjacent peaks per a single UTR)
 top.peaks = peaks.olap %>%
-  group_by(chr, name) %>%
+  group_by(chr, name, subarea2) %>%
   dplyr::slice(which.max(n.reads)) %>% 
   ungroup
 
@@ -402,7 +407,7 @@ peaks.olap = peaks.olap %>% mutate(name = mRNAs[as.data.frame(olaps)$subjectHits
 
 # Getting maximum coverage peak for each UTR group (since there is often multiple adjacent peaks per a single UTR)
 top.peaks = peaks.olap %>%
-  group_by(chr, name, area) %>%
+  group_by(chr, name, subarea2) %>%
   dplyr::slice(which.max(n.reads)) %>% 
   ungroup
 
@@ -429,7 +434,7 @@ assigned.peaks = rbind(assigned.peaks.forward %>% ungroup, assigned.peaks.revers
 
 file = prefix %>% paste0('.assigned.peaks.for.browser.bed')
 write.table(assigned.peaks, prefix.strand %>% paste0('.assigned.peaks.bed'), row.names = F, col.names = T, quote = F, sep = '\t')
-write.table(assigned.peaks[,c(1,6,7,12)], file, row.names = F, col.names = F, quote = F, sep = '\t')
+write.table(assigned.peaks[,c(1,6,7,14)], file, row.names = F, col.names = F, quote = F, sep = '\t')
 
 
 if(organism == 'Nv') JBdir = ('/home/lab/website/JBrowse/JBrowse_NV_experimental_d/')
@@ -449,7 +454,7 @@ filtered.peaks = assigned.peaks %>% filter(sum.cvrg / n.reads < 300)
 filtered.peaks = filtered.peaks %>% full_join(assigned.peaks %>% filter(n.reads > 200))
 
 write.table(filtered.peaks, prefix %>% paste0('.peaks.threshold.adjusted.normalized.bed'), row.names = F, col.names = T, quote = F, sep = '\t')
-write.table(filtered.peaks[,c(1,6,7,12)], prefix %>% paste0('.peaks.threshold.adjusted.normalized.forbrowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
+write.table(filtered.peaks[,c(1,6,7,14)], prefix %>% paste0('.peaks.threshold.adjusted.normalized.forbrowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
 
 if(organism == 'Nv') JBdir = ('/home/lab/website/JBrowse/JBrowse_NV_experimental_d/')
 if(organism == 'Sk') JBdir = ('/home/lab/website/JBrowse/JBrowse_SK_d/')
@@ -461,31 +466,11 @@ key = prefix %>% paste0('.peaks.threshold.normalized')
 ############################################################################################################
 ############################################################################################################
 
+##########          Removing 3'-UTR peaks           ##########          
+
 
 peaks = prefix %>% paste0('.peaks.threshold.adjusted.normalized.bed')
 peaks = fread(peaks)
-
-########## Removing very closely spaced peaks (E.g. NVE4175)
-
-peaks = peaks %>% mutate(area = str_sub(start.bbmap, 1, -3)) %>% mutate(subarea = str_sub(start.bbmap, -2, -2))
-
-peaks = peaks %>% mutate(subarea2 = subarea %>% as.integer()%/% 2)
-
-peaks = peaks %>% group_by(chr, name, subarea2) %>% dplyr::slice(which.max(n.reads)) %>% ungroup
-
-
-write.table(peaks, prefix %>% paste0('.peaks.threshold.adjusted.normalized.filt.bed'), row.names = F, col.names = T, quote = F, sep = '\t')
-write.table(peaks[,c(1,6,7,12)], prefix %>% paste0('.peaks.threshold.adjusted.normalized.filt.forbrowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
-
-if(organism == 'Nv') JBdir = ('/home/lab/website/JBrowse/JBrowse_NV_experimental_d/')
-if(organism == 'Sk') JBdir = ('/home/lab/website/JBrowse/JBrowse_SK_d/')
-key = prefix %>% paste0('.peaks.threshold.normalized.filt')
-'cd ' %>% paste0(JBdir)
-'sudo bin/flatfile-to-json.pl --bed ' %>% paste0(tn5Dir) %>% paste(prefix %>% paste0('.peaks.threshold.adjusted.normalized.filt.forbrowser.bed'), sep = '/') %>% paste0(' --key ') %>% paste0(key) %>% paste0(' --trackLabel ') %>% paste0(key) %>% paste0(' --trackType HTMLFeatures')
-
-
-
-########## Removing 3'-UTR peaks
 
 peaks.ranges = GRanges(seqnames = peaks$chr, strand = peaks$strand, ranges = IRanges(start = peaks$start.bbmap, end = peaks$end.bbmap))
 utrs.3prime.ranges
@@ -497,7 +482,7 @@ filtout = filtout %>% select(-name.3prime.UTR)
 peaks = dplyr::setdiff(peaks, filtout)
 
 write.table(peaks, prefix %>% paste0('.peaks.threshold.adjusted.normalized.filt.bed'), row.names = F, col.names = T, quote = F, sep = '\t')
-write.table(peaks[,c(1,6,7,12)], prefix %>% paste0('.peaks.threshold.adjusted.normalized.filt.forbrowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
+write.table(peaks[,c(1,6,7,14)], prefix %>% paste0('.peaks.threshold.adjusted.normalized.filt.forbrowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
 
 if(organism == 'Nv') JBdir = ('/home/lab/website/JBrowse/JBrowse_NV_experimental_d/')
 if(organism == 'Sk') JBdir = ('/home/lab/website/JBrowse/JBrowse_SK_d/')
@@ -522,7 +507,7 @@ peaks %>% nrow
 peaks = full_join(a, b) %>% data.table
 
 write.table(peaks, prefix %>% paste0('.peaks.final.bed'), row.names = F, col.names = T, quote = F, sep = '\t')
-write.table(peaks[,c(1,6,7,12)], prefix %>% paste0('.peaks.final.forborowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
+write.table(peaks[,c(1,6,7,14)], prefix %>% paste0('.peaks.final.forborowser.bed'), row.names = F, col.names = F, quote = F, sep = '\t')
 
 if(organism == 'Nv') JBdir = ('/home/lab/website/JBrowse/JBrowse_NV_experimental_d/')
 if(organism == 'Sk') JBdir = ('/home/lab/website/JBrowse/JBrowse_SK_d/')

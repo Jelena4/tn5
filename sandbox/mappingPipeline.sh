@@ -35,6 +35,7 @@ samtools view -bq 2 -@ 6 -o $4.R1.bam $4.R1.sam
 samtools view -bq 2 -@ 6 -o $4.PE.bam $4.PE.sam
 rm $4.R1.sam
 rm $4.PE.sam
+samtools view -@ 6 -h $4.R1.bam > $4.R1.sam
 
 ### Separating forward and reverse strand for read1
 samtools view -@ 6 -b -F 0x10 $4.R1.bam > $4.R1.forward.bam

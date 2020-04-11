@@ -1,5 +1,5 @@
 
-############## Assigning TSSs to genes #################
+############## Reading the gene models file #################
 
 if(organism == 'Nv') models = '/data/personal_folders/jscepanovic/NV/nveGenes.vienna130208.gff'
 if(organism == 'Sk') models = '/data/personal_folders/jscepanovic/SK/sacco_NCBI_valid_sorted_annot.higlass.annotation' # ?
@@ -60,7 +60,7 @@ mRNAs.ranges = GRanges(seqnames = mRNAs$V1, strand = mRNAs$V7, ranges = IRanges(
 
 # Reading the tn5 prime peaks file
 
-strand = 'reverse'
+strand = 'forward'
 prefix.strand = prefix %>% paste0('.R1.') %>% paste0(strand)
 
 bed = prefix.strand %>% paste0('.peaks.bed')

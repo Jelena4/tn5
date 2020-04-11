@@ -66,7 +66,7 @@ system(command, wait = T)
 command = '~/bbmap/pileup.sh in=' %>% 
   paste0(srt) %>% paste('basecov=', sep = ' ') %>% 
   paste0(prefix.strand) %>% 
-  paste0('.startCount.txt addfromreads=t startcov=t 32bit=t strandedcov=t')
+  paste0('.startCount.txt addfromreads=t startcov=t 32bit=t')
 system(command, wait = T)
 
 
@@ -83,10 +83,10 @@ command = '~/bbmap/pileup.sh in=' %>%
   paste0(srt) %>% 
   paste('basecov=', sep = ' ') %>% 
   paste0(prefix.strand) %>% 
-  paste0('.startCount.txt addfromreads=t startcov=t 32bit=t strandedcov=t')
+  paste0('.startCount.txt addfromreads=t stopcov=t 32bit=t')
 system(command, wait = T)
 
-######################## Peak calling ##########################
+######################## Getting peak coords ##########################
 
 ### forward strand
 strand = 'forward'
@@ -142,5 +142,9 @@ key = prefix.strand %>% paste0('.peaks')
 
 ################### Assigning TSSs to genes ######################
 
-source('/home/jscepanovic/git/tn5/sandbox/assigningTSSsToGenes.R')
+#source('/home/jscepanovic/git/tn5/sandbox/assigningTSSsToGenes.R')
+
+# or
+
+source('/home/jscepanovic/git/tn5/sandbox/assigningTSSsToGenesWithNormalization.R')
 
